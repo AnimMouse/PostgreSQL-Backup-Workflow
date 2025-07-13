@@ -1,0 +1,70 @@
+name: Backup PostgreSQL via Rclone
+on:
+  workflow_call:
+    inputs:
+      file_name:
+        required: true
+        type: string
+      dbname:
+        required: true
+        type: string
+      host:
+        required: true
+        type: string
+      port:
+        required: true
+        type: string
+      username:
+        required: true
+        type: string
+      postgresql_version:
+        required: true
+        type: string
+      zstd_clevel:
+        required: true
+        type: string
+      rclone_remote_to:
+        required: true
+        type: string
+    secrets:
+      password:
+        required: true
+      rclone_config:
+        required: true
+        
+jobs:
+  rclone:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup PostgreSQL
+        uses: tj-actions/install-postgresql@v3
+        with:
+          postgresql-version: ${{ inputs.postgresql_version }}
+          
+      - name: Setup Rclone
+        uses: AnimMouse/setup-rclone@v1
+        with:
+          rclone_config: ${{ secrets.rclone_config }}
+          
+      - name: Setup pgpass
+        run: |
+          echo "${{ inputs.host }}:${{ inputs.port }}:${{ inputs.dbname }}:${{ inputs.username }}:$PASSWORD" > ~/.pgpass
+          chmod 600 ~/.pgpass
+        env:
+          PASSWORD: ${{ secrets.password }}
+          
+      - name: Get current date & time for file name
+        id: file-name
+        run: |
+          echo date-time=$(date +'%Y-%m-%d %H-%M') >> $GITHUB_OUTPUT
+          echo year=$(date +%Y) >> $GITHUB_OUTPUT
+          
+      - name: Dump database
+        run: pg_dump -Fc -Z 0 -d ${{ inputs.dbname }} -h ${{ inputs.host }} -U ${{ inputs.username }} | zstd -T0 -${{ inputs.zstd_clevel }} -o "${{ inputs.file_name }} ${{ steps.file-name.outputs.date-time }}.dump.zst"
+        
+      - name: Upload via Rclone
+        run: rclone copy "${{ inputs.file_name }} ${{ steps.file-name.outputs.date-time }}.dump.zst" "${{ inputs.rclone_remote_to }}/${{ steps.file-name.outputs.year }}" -v
+        env:
+          RCLONE_DRIVE_CHUNK_SIZE: 256M
+          RCLONE_S3_CHUNK_SIZE: 64M
+          RCLONE_S3_UPLOAD_CONCURRENCY: 64
