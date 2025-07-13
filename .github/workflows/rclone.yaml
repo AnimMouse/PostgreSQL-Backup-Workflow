@@ -60,7 +60,8 @@ jobs:
           echo year=$(date +%Y) >> $GITHUB_OUTPUT
           
       - name: Dump database
-        run: pg_dump -Fc -Z 0 -d ${{ inputs.dbname }} -h ${{ inputs.host }} -U ${{ inputs.username }} | zstd -T0 -${{ inputs.zstd_clevel }} -o "${{ inputs.file_name }} ${{ steps.file-name.outputs.date-time }}.dump.zst"
+        shell: bash
+        run: pg_dump -Fc -Z 0 -d ${{ inputs.dbname }} -h ${{ inputs.host }} -p ${{ inputs.port }} -U ${{ inputs.username }} | zstd -T0 -${{ inputs.zstd_clevel }} -o "${{ inputs.file_name }} ${{ steps.file-name.outputs.date-time }}.dump.zst"
         
       - name: Upload via Rclone
         run: rclone copy "${{ inputs.file_name }} ${{ steps.file-name.outputs.date-time }}.dump.zst" "${{ inputs.rclone_remote_to }}/${{ steps.file-name.outputs.year }}" -v
