@@ -57,14 +57,14 @@ jobs:
         id: file-name
         run: |
           echo date-time=$(date +'%Y-%m-%d %H-%M') >> $GITHUB_OUTPUT
-          echo year=$(date +%Y) >> $GITHUB_OUTPUT
+          echo year-month=$(date +'%Y-%m') >> $GITHUB_OUTPUT
           
       - name: Dump database
         shell: bash
         run: pg_dump -Fc -Z 0 -d ${{ inputs.dbname }} -h ${{ inputs.host }} -p ${{ inputs.port }} -U ${{ inputs.username }} | zstd -T0 -${{ inputs.zstd_clevel }} -o "${{ inputs.file_name }} ${{ steps.file-name.outputs.date-time }}.dump.zst"
         
       - name: Upload via Rclone
-        run: rclone copy "${{ inputs.file_name }} ${{ steps.file-name.outputs.date-time }}.dump.zst" "${{ inputs.rclone_remote_to }}/${{ steps.file-name.outputs.year }}" -v
+        run: rclone copy "${{ inputs.file_name }} ${{ steps.file-name.outputs.date-time }}.dump.zst" "${{ inputs.rclone_remote_to }}/${{ steps.file-name.outputs.year-month }}" -v
         env:
           RCLONE_DRIVE_CHUNK_SIZE: 256M
           RCLONE_S3_CHUNK_SIZE: 64M
