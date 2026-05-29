@@ -1,0 +1,23 @@
+name: Update tag
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Tag
+        required: true
+        default: v1
+        
+jobs:
+  tag:
+    permissions:
+      contents: write
+    runs-on: ubuntu-slim
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        
+      - name: Update tag
+        uses: EndBug/latest-tag@v1
+        with:
+          ref: ${{ inputs.tag }}
+          description: Hugo Deployment Reusable Workflows ${{ inputs.tag }}
