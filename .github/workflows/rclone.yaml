@@ -37,7 +37,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Setup PostgreSQL
-        uses: tj-actions/install-postgresql@v3
+        uses: bustikiller/install-postgresql@0dffddddb55946444f8aeb77872a4a6f4986940c
         with:
           postgresql-version: ${{ inputs.postgresql_version }}
           
@@ -64,7 +64,7 @@ jobs:
         run: pg_dump -Fc -Z 0 -d ${{ inputs.dbname }} -h ${{ inputs.host }} -p ${{ inputs.port }} -U ${{ inputs.username }} | zstd -T0 -${{ inputs.zstd_clevel }} -o "${{ inputs.file_name }} ${{ steps.file-name.outputs.date-time }}.dump.zst"
         
       - name: Upload via Rclone
-        run: rclone copy "${{ inputs.file_name }} ${{ steps.file-name.outputs.date-time }}.dump.zst" "${{ inputs.rclone_remote_to }}/${{ steps.file-name.outputs.year-month }}" -v
+        run: rclone -v copy "${{ inputs.file_name }} ${{ steps.file-name.outputs.date-time }}.dump.zst" "${{ inputs.rclone_remote_to }}/${{ steps.file-name.outputs.year-month }}"
         env:
           RCLONE_DRIVE_CHUNK_SIZE: 256M
           RCLONE_S3_CHUNK_SIZE: 64M
