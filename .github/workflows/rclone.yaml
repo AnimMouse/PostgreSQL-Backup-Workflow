@@ -34,7 +34,7 @@ on:
         
 jobs:
   rclone:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Setup PostgreSQL
         uses: bustikiller/install-postgresql@0dffddddb55946444f8aeb77872a4a6f4986940c
